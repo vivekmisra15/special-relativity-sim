@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Special Relativity — Time Dilation &amp; Speed of Light</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,400&family=JetBrains+Mono:wght@400;700;900&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:      #e8eef7;
+  --surface: #f4f7fc;
+  --panel:   #ffffff;
+  --border:  #c8d4e8;
+  --c1:      #1a56db; /* Blue - Observer 1 */
+  --c2:      #c2410c; /* Orange - Observer 2 */
+  --text:    #1e293b;
+  --muted:   #64748b;
+  --faint:   #cbd5e1;
+  --shadow:  rgba(15,30,60,0.12);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px 14px 40px;
+  gap: 16px;
+}
+
+header { text-align: center; max-width: 880px; }
+header h1 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem,3.5vw,2rem);
+  color: var(--text);
+}
+header h1 em { font-style:italic; color: var(--c1); }
+header .subtitle {
+  font-size: .82rem;
+  color: var(--muted);
+  margin-top: 4px;
+  font-weight: 300;
+}
+
+#main-canvas {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 4px 24px var(--shadow);
+  display: block;
+  max-width: 100%;
+}
+
+#clocks {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 880px;
+}
+
+.clock-box {
+  flex: 1; min-width: 260px; max-width: 420px;
+  background: var(--panel);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 20px 12px;
+  box-shadow: 0 2px 12px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.clock-box::after {
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;
+}
+.clock-box.ground::after { background: var(--c1); }
+.clock-box.train::after  { background: var(--c2); }
+
+.clock-who {
+  font-size: .71rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 2px;
+}
+.clock-box.ground .clock-who { color: var(--c1); }
+.clock-box.train  .clock-who { color: var(--c2); }
+.clock-frame { font-size: .77rem; color: var(--muted); margin-bottom: 6px; }
+.clock-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.2rem; font-weight: 700; letter-spacing: .04em; line-height: 1;
+}
+.clock-box.ground .clock-display { color: var(--c1); }
+.clock-box.train  .clock-display { color: var(--c2); }
+.clock-explain {
+  font-size: .73rem; color: var(--muted); margin-top: 7px; line-height: 1.45;
+  border-top: 1px solid var(--faint); padding-top: 7px;
+}
+.clock-explain strong { color: var(--text); font-weight: 600; }
+
+#controls {
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center;
+  visibility: hidden; 
+}
+
+button {
+  font-family: 'Inter', sans-serif; font-size: .78rem; font-weight: 600;
+  padding: 8px 20px; border-radius: 8px; border: 1.5px solid transparent;
+  cursor: pointer; transition: all .18s;
+}
+#btn-play  { background: var(--c1); color:#fff; border-color: var(--c1); }
+#btn-play:hover  { background:#1e40af; }
+#btn-reset { background:transparent; color: var(--c2); border-color: var(--c2); }
+#btn-reset:hover { background:#fff5f0; }
+
+#legend {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  justify-content: center; font-size: .75rem; color: var(--muted);
+}
+.leg { display:flex; align-items:center; gap:6px; }
+.leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* ──────────────── OVERLAYS & MODALS ──────────────── */
+.overlay {
+  position:fixed; inset:0;
+  background:rgba(15,30,60,.75);
+  backdrop-filter:blur(5px);
+  display:flex; align-items:center; justify-content:center;
+  z-index:100; padding:20px;
+}
+.modal {
+  background:var(--panel); border-radius:16px;
+  max-width:640px; width:100%;
+  padding:34px 36px 26px;
+  box-shadow:0 20px 60px rgba(10,20,60,.35);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal .tag {
+  font-size:.71rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--c1); margin-bottom:10px;
+}
+.modal h2 {
+  font-family:'Playfair Display',serif; font-size:1.6rem;
+  color:var(--text); margin-bottom:15px;
+}
+.modal p {
+  font-size:.9rem; color:var(--text); line-height:1.65; margin-bottom:12px;
+}
+.modal p strong { font-weight:700; }
+
+/* Splash Specifics */
+.key-box {
+  background:#eff6ff; border-left:3px solid var(--c1);
+  border-radius:0 8px 8px 0; padding:12px 16px;
+  font-size:.85rem; color:#1e40af; line-height:1.55; margin:16px 0;
+}
+.steps {
+  background:#f8fafc; border:1px solid var(--faint);
+  border-radius:10px; padding:16px; margin:16px 0;
+}
+.steps ul { padding-left:20px; color:var(--text); font-size:.85rem; line-height:1.6; }
+.steps li { margin-bottom:8px; }
+
+/* Accordion Math Detail */
+.math-accordion {
+  background: #f8fafc; border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px; margin-top: 16px; margin-bottom: 16px;
+}
+.math-accordion summary {
+  font-weight: 600; font-size: 0.9rem; color: var(--c1); cursor: pointer; outline: none;
+}
+.math-accordion ul { margin-top: 12px; padding-left: 20px; font-size: .85rem; color: var(--text); line-height: 1.6;}
+.math-accordion li { margin-bottom: 6px; }
+
+.btn-primary {
+  width:100%; padding:14px; font-size:.95rem; font-weight:700;
+  background:var(--c1); color:#fff; border:none; border-radius:10px;
+  cursor:pointer; margin-top:10px; transition:background .18s;
+  letter-spacing:.02em;
+}
+.btn-primary:hover { background:#1e40af; }
+</style>
+</head>
+<body>
+
+<div id="splash-overlay" class="overlay">
+<div class="modal">
+  <div class="tag">Einstein · Special Theory of Relativity · 1905</div>
+  <h2>Time Dilation &amp; the Speed of Light</h2>
+  
+  <div class="key-box">
+    ⚡ <strong>The Golden Rule:</strong> The speed of light (<em>c</em>) is exactly the same for every observer, no matter how fast they are moving. This forces time and space to behave strangely.
+  </div>
+
+  <p>Welcome to this interactive journey through Einstein's Special Relativity. You'll witness one of physics' most mind-bending phenomena: <strong>time dilation</strong>.</p>
+
+  <div class="steps">
+    <p style="margin-bottom: 8px;"><strong>The Setup:</strong></p>
+    <ul>
+      <li><strong>Observer 1 (<span style="color:var(--c1)">Blue</span>)</strong> stands on the ground next to the train tracks.</li>
+      <li><strong>Observer 2 (<span style="color:var(--c2)">Orange</span>)</strong> stands at the rear of an ultra-long train stretching <strong>200 light-hours</strong> in front of them.</li>
+      <li>At the front of the train is a powerful lamp. When we start, the train will accelerate to <strong>0.999c</strong> (99.9% the speed of light), and the lamp will immediately fire light backward.</li>
+      <li>Both observers measure the speed of this light as exactly <em>c</em>. But something extraordinary must happen to their sense of time...</li>
+    </ul>
+  </div>
+  <button id="btn-start" class="btn-primary">Start the Simulation</button>
+</div>
+</div>
+
+<div id="tut-overlay" class="overlay" style="display:none;">
+<div class="modal">
+  <h2 id="tut-title">Phase Title</h2>
+  <div id="tut-body"></div>
+  <button id="btn-tut" class="btn-primary">Continue</button>
+</div>
+</div>
+
+<header>
+  <h1>Special Relativity — <em>Time Dilation</em></h1>
+  <p class="subtitle">Train at v = 0.999c &nbsp;·&nbsp; Lorentz factor γ ≈ 22.37 &nbsp;·&nbsp; Rest length = 200 light-hours</p>
+</header>
+
+<canvas id="main-canvas" width="880" height="340"></canvas>
+
+<div id="clocks">
+  <div class="clock-box ground">
+    <div class="clock-who">Observer 1 · You, standing on the ground</div>
+    <div class="clock-frame">Ground (stationary) reference frame</div>
+    <div class="clock-display" id="t1-display">00:00:00.000</div>
+    <div class="clock-explain">
+      <strong>Your clock ticks normally.</strong> This counts how much time has passed for <em>you</em> since the lamp fired.
+    </div>
+  </div>
+  <div class="clock-box train">
+    <div class="clock-who">Observer 2 · Passenger at the rear of the train</div>
+    <div class="clock-frame">Moving train reference frame</div>
+    <div class="clock-display" id="t2-display">00:00:00.000</div>
+    <div class="clock-explain">
+      <strong>This clock runs ≈22.4× slower</strong> as seen by you. The passenger ages more slowly. This is <em>proper time t′ = t ÷ γ</em>.
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <button id="btn-play">▶ Play / Pause</button>
+  <button id="btn-reset">↺ Reset Simulation</button>
+</div>
+
+<div id="legend">
+  <div class="leg"><div class="leg-dot" style="background:var(--c1)"></div>Observer 1 Frame (Ground)</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--c2)"></div>Observer 2 Frame (Train)</div>
+  <div class="leg"><div class="leg-dot" style="background:#fbbf24"></div>Light pulse</div>
+</div>
+
+<script>
+/* ═════════════════════════════════════════════════════════
+   SPECIAL RELATIVITY ANIMATION  v9
+   UI Updates: Larger, highly readable train clocks. 
+   Math pop-up removed from canvas and elegantly restyled inside Phase 4.
+   ═════════════════════════════════════════════════════════ */
+
+const canvas = document.getElementById('main-canvas');
+const ctx    = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// --- PHYSICS CONSTANTS & MATH ---
+const V_FRAC = 0.999;
+const C = 1; 
+const V = V_FRAC * C;
+const GAMMA = 1 / Math.sqrt(1 - (V_FRAC * V_FRAC)); // ~22.366
+
+const LEN_REST = 200; // 200 light-hours
+const LEN_CONTRACTED = LEN_REST / GAMMA; // ~8.94 light-hours
+const TIME_IMPACT = LEN_CONTRACTED / (V + C); // ~4.47 hours
+const TIME_OFFSET = LEN_REST * V_FRAC; // 199.8 hours
+
+// --- VISUAL SCALING ---
+const TRAIN_W = 320; 
+const TRAIN_H = 50;
+const PX_PER_LH = TRAIN_W / LEN_CONTRACTED; 
+const START_X = 200; 
+
+const TRACK_Y  = Math.round(H / 2) + 20;
+const GROUND_Y = TRACK_Y + TRAIN_H / 2 + 22;
+
+// --- STATE MACHINE ---
+let S = {
+  phase: 0, 
+  running: false,
+  t_hours: 0,
+  lastTS: null,
+  speedMul: 0.5,
+  hasPausedPhase2: false
+};
+
+const PHASES_CONTENT = [
+  null, 
+  { // Phase 1 
+    title: "Phase 1: Length Contraction",
+    body: `<p>Right now, Observer 1 and Observer 2 are standing at exactly the same spot (<em>x</em> = 0).</p>
+           <p>From <strong>Observer 2's perspective</strong> (on the train), the train stretches out <strong>200 light-hours</strong> in front of them.</p>
+           <p>But from <strong>Observer 1's perspective</strong> (on the ground), the train is moving so fast that extreme length contraction occurs.</p>
+           <div style="background: rgba(0,0,0,0.04); padding: 12px; border-left: 3px solid var(--c1); font-size: 0.9rem; margin: 12px 0; line-height: 1.5;">
+             Observer 1 sees the entire 200 lh train physically compressed to just <strong>8.94 light-hours</strong>!<br>
+             <span style="font-size: 0.8rem; color: var(--muted);">(We will show you the exact math behind this mind-bending shrinkage at the end).</span>
+           </div>
+           <p>When you click "Fire the Laser," both observers' clocks will start at zero, and the lamp at the front of the train will emit light backward.</p>`,
+    btn: "⚡ Fire the Laser"
+  },
+  { // Phase 2
+    title: "Phase 2: The Race",
+    body: `<p>The light has fired! Now watch carefully:</p>
+           <ul style="margin-left: 20px; margin-top: 8px; margin-bottom: 12px; color: var(--text); line-height: 1.6;">
+             <li>The light rushes <strong>left</strong> at speed <em>c</em> (in both reference frames).</li>
+             <li>Observer 2 (and the train) rushes <strong>right</strong> at 0.999<em>c</em>.</li>
+           </ul>
+           <p>The animation is now in <strong>slow motion</strong> so you can observe the details.</p>
+           <div style="background: #eff6ff; border-left: 3px solid var(--c1); padding: 12px; margin: 16px 0; font-size: 0.85rem; color: #1e40af; line-height: 1.55;">
+             Watch the <strong style="color:var(--c1)">blue bracket on the ground</strong>. It's tracking the total distance the light travels in Observer 1's reference frame—from the emission point to where it hits Observer 2.
+           </div>
+           <p>From Observer 2's viewpoint, the light only needs to cross the train's 200 lh length. But from Observer 1's viewpoint, the light and Observer 2 are rushing toward each other!</p>`,
+    btn: "Continue"
+  },
+  { // Phase 3
+    title: "Phase 3: The Conclusion",
+    body: `<p>The light has reached Observer 2! Let's look at the stopwatches:</p>
+           
+           <h3 style="margin-top:16px; margin-bottom:4px; font-size: 1.05rem; color:var(--c1);">Observer 1 (On the Ground)</h3>
+           <p>Observer 1 watched the light cross the contracted gap at a closing speed of 1.999<em>c</em>. Their clock reads <strong>4.47 hours</strong>.</p>
+           
+           <h3 style="margin-top:16px; margin-bottom:4px; font-size: 1.05rem; color:var(--c2);">Observer 2 (On the Train)</h3>
+           <p>Look at Observer 2's clock! It only reads <strong>0.20 hours</strong> (12 minutes).</p>
+           
+           <p>To keep the laws of physics intact, Observer 1 must see Observer 2's clock run <strong>≈ 22.4× slower</strong>.</p>
+           
+           <details class="math-accordion">
+               <summary>See the Math (Step-by-Step)</summary>
+               <ul>
+                   <li><strong>1. The Warp Factor (γ)</strong>: At 0.999c, the Lorentz factor is 1 / √(1 - 0.999²) ≈ <strong>22.37</strong></li>
+                   <li><strong>2. Contracted Length</strong>: 200 lh / 22.37 ≈ <strong>8.94 lh</strong></li>
+                   <li>
+                       <strong>3. Gap-Closing Rate</strong> = 1c (light) + 0.999c (train) = <strong>1.999c</strong><br>
+                       <em style="font-size: 0.85em; color: var(--muted); display: block; margin-top: 4px;">
+                           *Note: Nothing is actually moving faster than light! This 1.999c is simply the rate at which the gap between the light and the passenger is shrinking from the perspective of the ground observer.
+                       </em>
+                   </li>
+                   <li><strong>4. Time to Impact (Obs 1)</strong>: 8.94 lh ÷ 1.999c ≈ <strong>4.47 hours</strong></li>
+                   <li><strong>5. Time Dilation (Obs 2 Clock)</strong>: 4.47 hours ÷ 22.37 ≈ <strong>0.20 hours</strong></li>
+               </ul>
+           </details>
+           
+           <p style="margin-top: 15px; font-weight: 600; color: #b45309;">Wait... if the train is 200 lh long to Observer 2, shouldn't the light take 200 hours to cross it? Why does their clock only say 12 minutes?</p>`,
+    btn: "Next: The Final Paradox"
+  },
+  { // Phase 4 - Stylized Math Reveal
+    title: "Phase 4: The Secret of the Missing Time",
+    body: `<p>How does the light travel 200 light-hours in just 12 minutes for Observer 2?</p>
+           <p>Look closely at the two <strong>large digital clocks bolted to the roof of the train</strong>. Einstein discovered the <strong>Relativity of Simultaneity</strong>: to Observer 1 on the ground, clocks at different locations on a moving train are physically out of sync!</p>
+           <div style="background: #fef3c7; border-left: 3px solid #f59e0b; padding: 12px; margin: 16px 0; font-size: 0.95rem; color: #92400e; line-height: 1.55;">
+             When Observer 1's ground clock read 0.00, Observer 2's clock read 0.00, but the clock at the front of the train read <strong>-199.80 hours</strong>.
+           </div>
+           <p>Time is not a shared universal grid; the timeline itself tilts when you move fast.</p>
+           <p>From Observer 2's perspective on the train, the lamp actually fired <em>almost 8 days ago</em>. They just didn't hit "START" on their stopwatch until Observer 1 passed their window!</p>
+           
+           <div style="background: #0f172a; border-radius: 8px; padding: 16px; margin: 18px 0; color: #38bdf8; font-family: 'JetBrains Mono', monospace; text-align: center; border: 2px solid #475569; box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);">
+             <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 8px; font-family: 'Inter', sans-serif; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">Total Light Travel Time</div>
+             <div style="font-size: 1.05rem; font-weight: bold; letter-spacing: 0.5px; line-height: 1.4;">
+               [Arrival: +0.20h] - [Departure: -199.80h] <br>
+               <span style="color: #fbbf24; font-size: 1.4rem; display: block; margin-top: 8px;">= 200.00h</span>
+             </div>
+           </div>
+           
+           <p>The physics works out perfectly! The light traveled 200 light-hours, and it took exactly 200 hours.</p>`,
+    btn: "Next: Real World Proof"
+  },
+  { // Phase 5: Muon Proof
+    title: "Phase 5: Real World Proof (The Muon)",
+    body: `<p>Is this just a mathematical trick? No. We measure this physical reality every day using subatomic particles called <strong>muons</strong>.</p>
+           <p>When cosmic rays hit Earth's upper atmosphere, they create muons zooming downward at over 99.9% <em>c</em>.</p>
+           <p>A muon's lifespan is incredibly short (just 2.2 microseconds). Even at the speed of light, it should decay before traveling 1 kilometer. Since the atmosphere is 15 km thick, muons should <em>never</em> reach the ground.</p>
+           <p><strong>But they do.</strong> How?</p>
+           <ul style="margin-left: 20px; margin-top: 8px; margin-bottom: 12px; color: var(--text); line-height: 1.6;">
+             <li><strong>From Earth's perspective:</strong> The muon's clock ticks in slow motion (Time Dilation), so it lives long enough to reach us.</li>
+             <li><strong>From the muon's perspective:</strong> Its clock ticks normally. But because the Earth is rushing towards it at 99.9% <em>c</em>, the 15 km atmosphere physically shrinks to less than 1 km (Length Contraction), making it a quick trip!</li>
+           </ul>
+           <div style="background: rgba(16, 185, 129, 0.08); border-left: 3px solid #10b981; padding: 14px; margin: 18px 0; font-size: 0.9rem; color: #065f46; line-height: 1.55;">
+             <strong>🔬 The CERN Experiment:</strong> In 1977, physicists at <strong>CERN</strong> built a "Muon Storage Ring." They accelerated muons to 99.94% <em>c</em> and confirmed their lifespans stretched by the exact Lorentz factor Einstein predicted, proving time dilation and length contraction are absolute physical realities.
+           </div>`,
+    btn: "Unlock Free Play"
+  }
+];
+
+function fmtTime(h){
+  if(h < 0) h = 0;
+  const totalSec = h * 3600;
+  const hrs = Math.floor(h);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = Math.floor(totalSec % 60);
+  const ms = Math.floor((totalSec * 1000) % 1000);
+  return `${String(hrs).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(3,'0')}`;
+}
+
+function rr(x,y,w,h,r=4){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+/* ═══════════════ DRAWING FUNCTIONS ═══════════════ */
+
+function drawBg(){
+  const sky=ctx.createLinearGradient(0,0,0,GROUND_Y);
+  sky.addColorStop(0,'#c2d4e8');
+  sky.addColorStop(.45,'#d8e8f2');
+  sky.addColorStop(.78,'#e8d8c8');   
+  sky.addColorStop(1,'#e2ccb4');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND_Y);
+
+  [[150,32,100,24,0.55],[430,22,120,28,0.5],[740,38,80,20,0.45]].forEach(([cx,cy,cw,ch,a])=>{
+    const g=ctx.createRadialGradient(cx,cy,2,cx,cy,cw/2);
+    g.addColorStop(0,`rgba(255,252,245,${a})`);g.addColorStop(1,'rgba(240,230,215,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(cx,cy,cw/2,ch/2,0,0,Math.PI*2);ctx.fill();
+  });
+
+  ctx.save();
+  const STONE='#7a6450', STONE2='#8a7060';
+
+  function gableBuilding(x, baseY, w, h, gh){
+    ctx.fillRect(x, baseY-h, w, h);
+    const mx=x+w/2;
+    ctx.beginPath();
+    ctx.moveTo(x,      baseY-h);
+    ctx.lineTo(x,      baseY-h-gh*0.32);
+    ctx.lineTo(mx-w*0.28, baseY-h-gh*0.32);
+    ctx.lineTo(mx-w*0.14, baseY-h-gh*0.64);
+    ctx.lineTo(mx,         baseY-h-gh);
+    ctx.lineTo(mx+w*0.14, baseY-h-gh*0.64);
+    ctx.lineTo(mx+w*0.28, baseY-h-gh*0.32);
+    ctx.lineTo(x+w,    baseY-h-gh*0.32);
+    ctx.lineTo(x+w,    baseY-h);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Zytglogge (Clock Tower)
+  ctx.globalAlpha=0.20; ctx.fillStyle=STONE;
+  const ZX=28, ZW=38, ZBaseY=GROUND_Y;
+  ctx.fillRect(ZX, 38, ZW, ZBaseY-38);           
+  ctx.fillRect(ZX-4, 38, ZW+8, 18);              
+  ctx.fillRect(ZX+2, 28, ZW-4, 14);              
+  ctx.beginPath();
+  ctx.moveTo(ZX+ZW/2, 10);
+  ctx.lineTo(ZX-2, 32); ctx.lineTo(ZX+ZW+2, 32);
+  ctx.closePath(); ctx.fill();
+  [[ZX+2,32],[ZX+ZW-2,32]].forEach(([px,py])=>{
+    ctx.beginPath();ctx.moveTo(px,py-8);ctx.lineTo(px-3,py);ctx.lineTo(px+3,py);ctx.closePath();ctx.fill();
+  });
+  ctx.globalAlpha=0.15; ctx.fillStyle='#e0c89a';
+  ctx.beginPath(); ctx.arc(ZX+ZW/2, 60, 10, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha=0.22; ctx.fillStyle=STONE;
+  ctx.beginPath(); ctx.arc(ZX+ZW/2, 60, 10, 0, Math.PI*2);
+  ctx.strokeStyle=STONE; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.save(); ctx.globalAlpha=0.28; ctx.strokeStyle='#503828'; ctx.lineWidth=1.5;
+  const zcx=ZX+ZW/2, zcy=60;
+  ctx.beginPath();ctx.moveTo(zcx,zcy);ctx.lineTo(zcx+1,zcy-7);ctx.stroke(); 
+  ctx.beginPath();ctx.moveTo(zcx,zcy);ctx.lineTo(zcx+6,zcy+1);ctx.stroke(); 
+  ctx.restore();
+  ctx.globalAlpha=0.20; ctx.fillStyle=STONE;
+
+  [
+    [72, GROUND_Y, 28, 52, 20], [100,GROUND_Y, 40, 68, 28],
+    [140,GROUND_Y, 26, 48, 18], [166,GROUND_Y, 36, 62, 26],
+  ].forEach(([x,y,w,h,gh])=>gableBuilding(x,y,w,h,gh));
+
+  ctx.globalAlpha=0.17; ctx.fillStyle=STONE2;
+  [
+    [230,GROUND_Y, 48, 74, 32], [290,GROUND_Y, 32, 55, 22],
+    [332,GROUND_Y, 44, 70, 30], [388,GROUND_Y, 28, 50, 18],
+    [426,GROUND_Y, 52, 78, 36], [492,GROUND_Y, 36, 60, 24],
+    [540,GROUND_Y, 30, 52, 20], [582,GROUND_Y, 44, 68, 30],
+    [640,GROUND_Y, 32, 56, 22],
+  ].forEach(([x,y,w,h,gh])=>gableBuilding(x,y,w,h,gh));
+
+  // Bern Münster Cathedral
+  ctx.globalAlpha=0.19; ctx.fillStyle=STONE;
+  const SX=710;
+  ctx.fillRect(SX-10, GROUND_Y-72, 42, 72);
+  ctx.fillRect(SX+6, GROUND_Y-110, 14, 42);
+  ctx.fillRect(SX-16, GROUND_Y-58, 8, 30);
+  ctx.fillRect(SX+22, GROUND_Y-58, 8, 30);
+  ctx.beginPath();
+  ctx.moveTo(SX+13, GROUND_Y-148); ctx.lineTo(SX+6,  GROUND_Y-112); ctx.lineTo(SX+20, GROUND_Y-112);
+  ctx.closePath(); ctx.fill();
+  ctx.globalAlpha=0.12; ctx.beginPath();
+  ctx.arc(SX+11, GROUND_Y-50, 7, 0, Math.PI*2);
+  ctx.strokeStyle=STONE; ctx.lineWidth=1; ctx.stroke();
+
+  ctx.globalAlpha=0.16; ctx.fillStyle=STONE2;
+  [ [760,GROUND_Y, 38, 62, 26], [808,GROUND_Y, 32, 50, 20], [848,GROUND_Y, 30, 56, 22] ].forEach(([x,y,w,h,gh])=>gableBuilding(x,y,w,h,gh));
+  ctx.restore();
+
+  ctx.save(); ctx.globalAlpha=0.10; ctx.strokeStyle='#806050'; ctx.lineWidth=1.2;
+  for(let ax=74; ax<W-30; ax+=20){
+    ctx.beginPath(); ctx.arc(ax+10, GROUND_Y+1, 10, Math.PI, 0); ctx.stroke();
+  }
+  ctx.restore();
+
+  // --- Prominent Bern 1905 Watermark ---
+  ctx.save(); 
+  ctx.globalAlpha=0.45; 
+  ctx.fillStyle='#1e293b';
+  ctx.font='italic 700 18px "Playfair Display", Georgia, serif';
+  ctx.textAlign='right';
+  ctx.fillText('Bern, Switzerland — 1905', W - 25, 35);
+  ctx.restore();
+
+  const gg=ctx.createLinearGradient(0,GROUND_Y,0,H);
+  gg.addColorStop(0,'#b4a488'); gg.addColorStop(.2,'#9e8e72'); gg.addColorStop(1,'#6e5e48');
+  ctx.fillStyle=gg; ctx.fillRect(0,GROUND_Y,W,H-GROUND_Y);
+
+  ctx.save(); ctx.globalAlpha=0.14; ctx.fillStyle='#7a6040';
+  for(let row=0, ry2=GROUND_Y+4; ry2<H; row++, ry2+=11){
+    const off=(row%2)*9;
+    for(let cx2=off-9; cx2<W; cx2+=18){ rr(cx2+1, ry2+1, 16, 8, 2); ctx.fill(); }
+  }
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha=0.09; ctx.strokeStyle='#4a3828'; ctx.lineWidth=0.5;
+  for(let ry2=GROUND_Y+4; ry2<H; ry2+=11){
+    ctx.beginPath(); ctx.moveTo(0,ry2); ctx.lineTo(W,ry2); ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.fillStyle='#b0a090'; ctx.fillRect(0,TRACK_Y+TRAIN_H/2+2,W,12);
+  ctx.strokeStyle='#706050'; ctx.lineWidth=2.5;
+  [TRACK_Y+TRAIN_H/2+4, TRACK_Y+TRAIN_H/2+11].forEach(y=>{
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  });
+  ctx.strokeStyle='#5a4030'; ctx.lineWidth=3;
+  for(let x=0;x<W;x+=24){
+    ctx.beginPath(); ctx.moveTo(x,TRACK_Y+TRAIN_H/2+3); ctx.lineTo(x,TRACK_Y+TRAIN_H/2+13); ctx.stroke();
+  }
+}
+
+// --- NEW UI: UPSCALED Train Roof Clocks ---
+function drawTrainClocks(rx, fx, t_hours) {
+  const ry = TRACK_Y - TRAIN_H/2;
+  const t_rear = t_hours / GAMMA;
+  const t_front = t_rear - TIME_OFFSET;
+
+  ctx.save();
+
+  // ─── DRAW UPSCALED CLOCK HOUSINGS ───
+  ctx.fillStyle = '#0f172a';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+  rr(rx + 6, ry - 28, 76, 24, 4); // Rear clock housing (Larger)
+  rr(fx - 82, ry - 28, 76, 24, 4); // Front clock housing (Larger)
+  ctx.fill(); 
+  ctx.stroke();
+
+  // ─── DRAW UPSCALED DIGITAL LED TEXT ───
+  ctx.fillStyle = '#38bdf8'; 
+  ctx.font = '900 13px "JetBrains Mono", monospace'; // Heavier and larger font
+  ctx.textAlign = 'center';
+  ctx.fillText(t_rear.toFixed(2) + 'h', rx + 44, ry - 11);
+  ctx.fillText(t_front.toFixed(2) + 'h', fx - 44, ry - 11);
+
+  // ─── DRAW THICKER STEMS BOLTING CLOCKS TO ROOF ───
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 4; // Thicker mounts
+  ctx.beginPath();
+  ctx.moveTo(rx + 44, ry - 4); ctx.lineTo(rx + 44, ry);
+  ctx.moveTo(fx - 44, ry - 4); ctx.lineTo(fx - 44, ry);
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+function drawTrain(rx){
+  const ry=TRACK_Y-TRAIN_H/2, fx=rx+TRAIN_W;
+  ctx.shadowColor='rgba(0,20,60,0.28)';ctx.shadowBlur=16;ctx.shadowOffsetY=5;
+  rr(rx,ry,TRAIN_W,TRAIN_H,6);ctx.fillStyle='#182848';ctx.fill();
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+
+  const bg=ctx.createLinearGradient(0,ry,0,ry+TRAIN_H);
+  bg.addColorStop(0,'#4070a8');bg.addColorStop(.3,'#2d5080');
+  bg.addColorStop(.7,'#1e3860');bg.addColorStop(1,'#122040');
+  rr(rx,ry,TRAIN_W,TRAIN_H,6);ctx.fillStyle=bg;ctx.fill();
+
+  const sh=ctx.createLinearGradient(0,ry,0,ry+10);
+  sh.addColorStop(0,'rgba(255,255,255,.2)');sh.addColorStop(1,'rgba(255,255,255,0)');
+  rr(rx+2,ry+1,TRAIN_W-4,10,4);ctx.fillStyle=sh;ctx.fill();
+
+  ctx.strokeStyle='rgba(100,160,240,.45)';ctx.lineWidth=1.5;
+  rr(rx,ry,TRAIN_W,TRAIN_H,6);ctx.stroke();
+
+  for(let i=0;i<8;i++){
+    const wx=fx-28-i*35;
+    if(wx<rx+14)break;
+    const wg=ctx.createLinearGradient(0,ry+10,0,ry+28);
+    wg.addColorStop(0,'#a0d0f8');wg.addColorStop(1,'#5898d0');
+    rr(wx,ry+10,22,16,3);ctx.fillStyle=wg;ctx.fill();
+    ctx.strokeStyle='rgba(80,140,200,.55)';ctx.lineWidth=1;
+    rr(wx,ry+10,22,16,3);ctx.stroke();
+  }
+
+  ctx.save();ctx.globalAlpha=0.08;
+  for(let i=1;i<=10;i++){
+    rr(rx-i*14,ry+4,11,TRAIN_H-8,2);ctx.fillStyle='#3060a0';ctx.fill();
+  }
+  ctx.restore();
+
+  [[rx+22,TRACK_Y+TRAIN_H/2],[rx+TRAIN_W/2,TRACK_Y+TRAIN_H/2],[fx-22,TRACK_Y+TRAIN_H/2]].forEach(([wx,wy])=>{
+    ctx.beginPath();ctx.arc(wx,wy+2,7,0,Math.PI*2);
+    ctx.fillStyle='#2a3850';ctx.fill();ctx.strokeStyle='#607090';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();ctx.arc(wx,wy+2,3,0,Math.PI*2);ctx.fillStyle='#8090a0';ctx.fill();
+  });
+}
+
+function drawLamp(fx){
+  const lx=fx, ly=TRACK_Y-TRAIN_H/2-5;
+  ctx.shadowColor='#40b830';ctx.shadowBlur=18;
+  ctx.beginPath();ctx.arc(lx,ly,9,0,Math.PI*2);
+  ctx.fillStyle='#b0ffa0';ctx.fill();
+  ctx.shadowBlur=0;
+}
+
+function drawBeam(lx){
+  const ly=TRACK_Y-2;
+  for(let i=0;i<9;i++){
+    const ox=lx+i*9, a=(9-i)/9*.65, r=(9-i)*1.9;
+    const g=ctx.createRadialGradient(ox,ly,0,ox,ly,r);
+    g.addColorStop(0,`rgba(255,210,20,${a})`);g.addColorStop(1,'rgba(255,180,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(ox,ly,r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.shadowColor='#ffd700';ctx.shadowBlur=22;
+  ctx.beginPath();ctx.arc(lx,ly,5.5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.shadowBlur=0;
+}
+
+function drawObs(x, color, label, showLabel = true){
+  const gy=GROUND_Y;
+  ctx.save();ctx.strokeStyle=color;ctx.lineWidth=2;
+  ctx.fillStyle=color+'28';ctx.beginPath();ctx.ellipse(x,gy+3,8,3,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.moveTo(x-2,gy-2);ctx.lineTo(x-6,gy+9);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x+2,gy-2);ctx.lineTo(x+6,gy+9);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,gy-17);ctx.lineTo(x,gy-2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,gy-13);ctx.lineTo(x-8,gy-7);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x,gy-13);ctx.lineTo(x+8,gy-7);ctx.stroke();
+  ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=8;
+  ctx.beginPath();ctx.arc(x,gy-21,6,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  if(showLabel) {
+    ctx.font='700 9px "Inter"';ctx.textAlign='center';ctx.fillText(label,x,gy-32);
+  }
+  ctx.restore();
+}
+
+// ─── HIGH CONTRAST TEXT UPDATE ───
+function drawBrackets(rx, fx, lx) {
+  ctx.save();
+  ctx.lineWidth = 2;
+  
+  // Train Bracket (Observer 2 Frame -> Orange)
+  const ty = TRACK_Y - TRAIN_H/2 - 40; 
+  ctx.strokeStyle = '#c2410c'; ctx.fillStyle = '#c2410c';
+  ctx.beginPath(); ctx.moveTo(rx, ty+6); ctx.lineTo(rx, ty); ctx.lineTo(fx, ty); ctx.lineTo(fx, ty+6); ctx.stroke();
+  
+  // High Contrast Text (White outline + Solid color fill)
+  ctx.font = '800 12px "Inter", sans-serif'; 
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = '#ffffff'; // White glowing stroke
+  ctx.lineWidth = 3.5;
+  ctx.strokeText('200 lh (Rest Length)', rx + (fx-rx)/2, ty - 6);
+  ctx.fillText('200 lh (Rest Length)', rx + (fx-rx)/2, ty - 6);
+
+  // Ground Bracket (Observer 1 Frame -> Blue)
+  if (S.phase >= 2) {
+      const gy = GROUND_Y + 28;
+      const startLightX = START_X + TRAIN_W; // Emission point
+      const currentLx = lx !== null ? lx : (S.t_hours >= TIME_IMPACT ? rx : startLightX);
+      
+      ctx.strokeStyle = '#1a56db'; ctx.fillStyle = '#1a56db';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(currentLx, gy-6); ctx.lineTo(currentLx, gy); ctx.lineTo(startLightX, gy); ctx.lineTo(startLightX, gy-6); ctx.stroke();
+      
+      const dist = (S.t_hours >= TIME_IMPACT) ? 4.47 : (startLightX - currentLx) / PX_PER_LH;
+      
+      // High Contrast Text
+      ctx.strokeStyle = '#ffffff'; 
+      ctx.lineWidth = 3.5;
+      ctx.strokeText(`Light traveled: ${dist.toFixed(2)} lh`, currentLx + (startLightX-currentLx)/2, gy + 16);
+      ctx.fillText(`Light traveled: ${dist.toFixed(2)} lh`, currentLx + (startLightX-currentLx)/2, gy + 16);
+  }
+  ctx.restore();
+}
+
+function drawFlash(x){
+  const g=ctx.createRadialGradient(x,TRACK_Y,0,x,TRACK_Y,72);
+  g.addColorStop(0,`rgba(255,240,70,0.8)`);
+  g.addColorStop(.4,`rgba(255,200,20,0.4)`);
+  g.addColorStop(1,'rgba(255,200,0,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,TRACK_Y,72,0,Math.PI*2);ctx.fill();
+}
+
+/* ═══════════════ MAIN SIMULATION LOGIC ═══════════════ */
+
+function drawScene(){
+  ctx.clearRect(0,0,W,H);
+  drawBg();
+
+  // Math Mapping
+  const train_math_x = V * S.t_hours;
+  const light_math_x = LEN_CONTRACTED - (C * S.t_hours);
+
+  // Pixel Mapping
+  const rx = START_X + (train_math_x * PX_PER_LH);
+  const fx = rx + TRAIN_W;
+  const lx = START_X + (light_math_x * PX_PER_LH);
+
+  if (S.t_hours >= TIME_IMPACT && S.phase > 0) drawFlash(rx);
+  drawTrain(rx);
+  drawTrainClocks(rx, fx, S.t_hours); 
+  
+  if (S.phase >= 2) drawLamp(fx);
+  if (S.phase >= 2 && S.t_hours < TIME_IMPACT) drawBeam(lx);
+
+  drawObs(START_X, '#1a56db', 'Obs 1');
+  drawObs(rx, '#c2410c', 'Obs 2', rx > START_X + 20); // Hide label if overlapping
+
+  drawBrackets(rx, fx, S.phase >= 2 && S.t_hours < TIME_IMPACT ? lx : null);
+}
+
+function updateUI(){
+  document.getElementById('t1-display').textContent = fmtTime(S.t_hours);
+  document.getElementById('t2-display').textContent = fmtTime(S.t_hours / GAMMA);
+}
+
+function showTutorial(phaseIndex) {
+  S.phase = phaseIndex;
+  document.getElementById('tut-title').innerText = PHASES_CONTENT[phaseIndex].title;
+  document.getElementById('tut-body').innerHTML = PHASES_CONTENT[phaseIndex].body;
+  document.getElementById('btn-tut').innerText = PHASES_CONTENT[phaseIndex].btn;
+  document.getElementById('tut-overlay').style.display = 'flex';
+}
+
+function loop(ts){
+  if(S.lastTS === null) S.lastTS = ts;
+  const raw = (ts - S.lastTS) / 1000; 
+  S.lastTS = ts;
+
+  if(S.running && S.phase >= 2){
+    // Scale visual speed so the 4.47h impact is viewable
+    const dt_hours = (raw * 1) * S.speedMul; 
+    S.t_hours += dt_hours;
+
+    // Phase 2 Auto-pause (Mid-flight) - Only during tutorial
+    if(S.phase === 2 && S.t_hours > 0.8 && !S.hasPausedPhase2) {
+      S.running = false;
+      S.hasPausedPhase2 = true;
+      showTutorial(2);
+    }
+
+    // Phase 3 Auto-pause (Impact)
+    if(S.t_hours >= TIME_IMPACT) {
+      S.t_hours = TIME_IMPACT; // Lock exactly to the mathematical conclusion
+      S.running = false;
+      if (S.phase === 2) showTutorial(3); // Only pop up if we are in the tutorial flow
+    }
+  }
+  
+  drawScene(); 
+  updateUI();
+  requestAnimationFrame(loop);
+}
+
+// Interactions
+document.getElementById('btn-start').addEventListener('click', () => {
+  document.getElementById('splash-overlay').style.display = 'none';
+  showTutorial(1); 
+});
+
+document.getElementById('btn-tut').addEventListener('click', () => {
+  document.getElementById('tut-overlay').style.display = 'none';
+  if (S.phase === 1) {
+    S.phase = 2;
+    S.running = true;
+  } else if (S.phase === 2) {
+    S.running = true;
+  } else if (S.phase === 3) {
+    showTutorial(4); // Move to Simultaneity Phase
+  } else if (S.phase === 4) {
+    showTutorial(5); // Move to Muon Phase
+  } else if (S.phase === 5) {
+    S.phase = 6; // Free play mode
+    document.getElementById('controls').style.visibility = 'visible';
+  }
+});
+
+document.getElementById('btn-play').addEventListener('click', () => {
+  if (S.t_hours >= TIME_IMPACT) return;
+  S.running = !S.running;
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  S.t_hours = 0;
+  S.running = false;
+  S.hasPausedPhase2 = false;
+  S.phase = 6; // Stay in free play
+  drawScene();
+  updateUI();
+});
+
+// Kick off
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
