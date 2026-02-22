@@ -34,7 +34,7 @@ body {
   gap: 16px;
 }
 
-header { text-align: center; max-width: 880px; }
+header { text-align: center; max-width: 880px; width: 100%; }
 header h1 {
   font-family: 'Playfair Display', serif;
   font-weight: 700;
@@ -49,6 +49,19 @@ header .subtitle {
   font-weight: 300;
 }
 
+/* Landscape orientation tip (Hidden by default) */
+.landscape-tip {
+  display: none;
+  font-size: 0.75rem;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #f59e0b;
+  font-weight: 600;
+  margin-top: -6px;
+}
+
 #main-canvas {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -56,6 +69,7 @@ header .subtitle {
   box-shadow: 0 4px 24px var(--shadow);
   display: block;
   max-width: 100%;
+  height: auto; /* Ensures proportional scaling */
 }
 
 #clocks {
@@ -105,6 +119,7 @@ header .subtitle {
 #controls {
   display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center;
   visibility: hidden; 
+  width: 100%;
 }
 
 button {
@@ -184,6 +199,38 @@ button {
   letter-spacing:.02em;
 }
 .btn-primary:hover { background:#1e40af; }
+
+/* ──────────────── MOBILE OPTIMIZATION ──────────────── */
+@media (max-width: 768px) {
+  body { padding: 12px 10px 30px; gap: 12px; }
+  header h1 { font-size: 1.4rem; }
+  header .subtitle { font-size: 0.75rem; line-height: 1.4; }
+  
+  /* Show tip only on phones in portrait mode */
+  @media (orientation: portrait) {
+    .landscape-tip { display: block; }
+  }
+
+  /* Ensure canvas scales perfectly */
+  #main-canvas { width: 100%; height: auto; border-radius: 8px; }
+
+  /* Stack the clocks */
+  #clocks { flex-direction: column; gap: 12px; }
+  .clock-box { max-width: 100%; width: 100%; padding: 16px; }
+  .clock-display { font-size: 2rem; }
+
+  /* Stack and expand controls */
+  #controls { flex-direction: column; max-width: 400px; margin: 0 auto; }
+  button { width: 100%; padding: 14px; font-size: 0.9rem; }
+  
+  /* Adjust modals for smaller screens */
+  .modal { padding: 24px 20px 20px; max-height: 85vh; }
+  .modal h2 { font-size: 1.4rem; }
+  .modal p, .steps ul { font-size: 0.85rem; }
+  .steps { padding: 12px; }
+  
+  #legend { gap: 12px; font-size: 0.7rem; flex-direction: column; align-items: center; }
+}
 </style>
 </head>
 <body>
@@ -225,6 +272,8 @@ button {
   <p class="subtitle">Train at v = 0.999c &nbsp;·&nbsp; Lorentz factor γ ≈ 22.37 &nbsp;·&nbsp; Rest length = 200 light-hours</p>
 </header>
 
+<div class="landscape-tip">📱 Tip: Rotate your phone sideways for the best view!</div>
+
 <canvas id="main-canvas" width="880" height="340"></canvas>
 
 <div id="clocks">
@@ -259,9 +308,9 @@ button {
 
 <script>
 /* ═════════════════════════════════════════════════════════
-   SPECIAL RELATIVITY ANIMATION  v9
-   UI Updates: Larger, highly readable train clocks. 
-   Math pop-up removed from canvas and elegantly restyled inside Phase 4.
+   SPECIAL RELATIVITY ANIMATION  v10
+   UI Updates: Fully Mobile Responsive. CSS fluid scaling, 
+   automatic layout stacking, and orientation warnings.
    ═════════════════════════════════════════════════════════ */
 
 const canvas = document.getElementById('main-canvas');
@@ -560,8 +609,8 @@ function drawTrainClocks(rx, fx, t_hours) {
   ctx.fillStyle = '#0f172a';
   ctx.strokeStyle = '#475569';
   ctx.lineWidth = 2;
-  rr(rx + 6, ry - 28, 76, 24, 4); // Rear clock housing (Larger)
-  rr(fx - 82, ry - 28, 76, 24, 4); // Front clock housing (Larger)
+  rr(rx + 6, ry - 28, 76, 24, 4); // Rear clock housing
+  rr(fx - 82, ry - 28, 76, 24, 4); // Front clock housing
   ctx.fill(); 
   ctx.stroke();
 
