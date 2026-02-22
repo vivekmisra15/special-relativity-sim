@@ -2,27 +2,33 @@
 
 This simulation was built using a series of detailed architectural prompts with AI (Claude and Gemini). Rather than asking for the entire simulation at once, the project was guided by setting strict physics constraints, building a state machine, and explicitly designing the visual solutions.
 
-Below are the 3 key structural prompts used to generate the core engine and learning flow. There were iterative modifications in the prompting process.
+Below are the 3 key structural prompts used to generate the core engine and learning flow. There was fair amount of iteration and several intermediate prompts in addtion to the 3 prompts shown below as indicative examples.
 
 ## 1. The Genesis Prompt (Claude)
-*This was the initial zero-shot prompt used to generate the foundation of the project. It established the core visual metaphor (Einstein's train), the strict physics requirement (0.999c), and the HTML5 Canvas technical stack.*
+*This was the initial zero-shot prompt used to generate the foundation of the project. It established the core visual metaphor (Einstein's train) and the HTML5 Canvas technical stack. The prompt itself was refined in Gemini and then used on Claude.*
 
-> **Prompt:** "I want to build an interactive HTML5 Canvas simulation demonstrating Einstein's Special Relativity, specifically Time Dilation and Length Contraction. 
->
-> **Technical Stack:** A single file containing HTML, CSS, and Vanilla JavaScript. No external libraries. Clean, modern, high-contrast UI.
+> **Prompt:** > **Role:** You are an expert physics educator and programmer specializing in coding animations (e.g., using Python's Manim library, p5.js, or HTML5 Canvas).
 > 
-> **The Setup:** > * Create a scene with two observers. Observer 1 is standing perfectly still on the ground. Observer 2 is standing at the rear of a very long train. 
-> * The train is moving at v = 0.999c. 
-> * There is a lamp at the very front of the train. The lamp will fire a beam of light backward toward Observer 2.
->
-> **The UI:**
-> Include two large digital clocks on the screen. One represents Observer 1's time (ground frame), and the other represents Observer 2's time (train frame). The clocks must update live based on the Lorentz factor (γ) for 0.999c. 
->
-> **The Execution:**
-> Build a Javascript state machine (`requestAnimationFrame`) to animate the train moving right, and the light beam moving left. Do not fake the math—calculate the pixel positions dynamically based on the exact time dilation and length contraction formulas."
+> **Objective:** Write the code to generate an educational 2D animation that visualizes Time Dilation and the constancy of the speed of light based on Einstein's Special Theory of Relativity.
+> 
+> **The Scenario & Entities:**
+> * **Observer 1 (Ground Frame):** A stationary observer standing outside on the ground.
+> * **The Train:** A very long train (e.g., 5 light-seconds long) moving away from Observer 1 at a constant relativistic speed of v = 0.95c (no acceleration).
+> * **Observer 2 (Train Frame):** A passenger standing at the rear end of the train.
+> * **The Light Source:** A lamp located at the front end of the train.
+> * **The Light Beam:** The lamp emits a beam of light that travels from the front of the train towards the rear (towards Observer 2). Because the train is moving away from Observer 1, the light beam is also traveling backward toward Observer 1.
+> * **Stopwatches (Clocks):** Two clear digital stopwatches on screen. Clock 1 measures time for Observer 1 (t). Clock 2 measures proper time for Observer 2 (t').
+> 
+> **Physics & Animation Rules to Enforce:**
+> * **Constancy of c:** The animation must visually demonstrate that the speed of the light beam is exactly c relative to both Observer 1 and Observer 2, despite the train moving at 0.95c.
+> * **Time Dilation:** Show the effects of time dilation (γ ≈ 3.2). Clock 2 (on the moving train) must tick noticeably slower than Clock 1 (on the ground) from the perspective of the ground observer.
+> * **Scaling:** Scale down the speed of light drastically for the visual representation so the viewer can track the movement of the train and the light beam easily.
+> * **Visual Layout:** Split the screen or use clear labels so the viewer can see the ground frame and the train moving, alongside the two stopwatches ticking at their respective rates.
+> 
+> Please provide the complete, runnable code to generate this animation, along with brief instructions on how to run it.
 
 ## 2. The Master Architecture & Physics Prompt (Gemini)
-*This prompt was used to establish the visual aesthetic, the strict mathematical constraints (origin synchronization), and the phase-based tutorial state machine.*
+*After generating the base visual code with Claude, we pivoted the math to an even more extreme velocity (0.999c) to make the visual effect more drastic. This prompt was used to establish the visual aesthetic, the strict mathematical constraints (origin synchronization), and the phase-based tutorial state machine.*
 
 > **Prompt:** "You are an expert physics educator and senior frontend developer. We are building an interactive Special Relativity HTML5/JS/CSS animation. 
 > 
